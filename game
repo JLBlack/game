@@ -1,0 +1,162 @@
+#!/usr/bin/env python3
+
+import random
+import sys
+
+
+X, Y = 0, 1
+X_SIZE = Y_SIZE = 5
+
+
+def randint_excluding_midpoint(left: int, right: int):
+    assert left != right
+
+    if left > right:
+        left, right = right, left
+
+    distance_between = right - left
+    midpoint = right - int(distance_between / 2)
+    value = random.randint(left, right - 1)
+
+    if value >= midpoint:
+        value += 1
+
+    return value
+
+
+def make_win_position():
+    return [
+        randint_excluding_midpoint(X_SIZE, X_SIZE * -1),
+        randint_excluding_midpoint(Y_SIZE * -1, Y_SIZE),
+    ]
+
+continues_remaining = 3
+position = [0, 0]  # X, Y
+
+win_position = make_win_position()
+
+
+def move_left():
+    position[X] = position[X] - 1
+
+def move_right():
+    position[X] = position[X] + 1
+
+def move_backward():
+    position[Y] = position[Y] - 1
+
+def move_forward():
+    position[Y] = position[Y] + 1
+
+
+DIRECTIONS = {
+    'forward': move_forward,
+    'backward': move_backward,
+    'left': move_left,
+    'right': move_right,
+}
+
+VERBS = {
+    'walk': DIRECTIONS,
+}
+
+
+def is_game_over(message: str):
+    global win_position
+    global continues_remaining
+
+    print(message)
+
+    if not continues_remaining:
+        print('--- GAME OVER ---')
+        return True
+
+    continues_remaining -= 1
+    print(f'Only {continues_remaining} continues remain!')
+
+    position[X] = 0
+    position[Y] = 0
+
+    win_position = make_win_position()
+    return False
+
+
+def is_winning_position(message: str):
+    if position == win_position:
+        print(message)
+        return True
+
+    return False
+
+
+# <X<Y : <Y     : <Y    : <Y    : >X<Y
+# <X   : -1, -1 : 0, -1 : 1, -1 : >X
+# <X   : -1, 0  : 0, 0  : 1, 0  : >X
+# <X   : -1, 1  : 0, 1  : 1, 1  : >X
+# <X>Y : >Y     : >Y    : >Y    : >X>Y
+
+
+def player_is_in_bounds():
+    if position[X] > X_SIZE:
+        return False
+
+    if position[X] < X_SIZE * -1:
+        return False
+
+    if position[Y] > Y_SIZE:
+        return False
+
+    return position[Y] >= Y_SIZE * -1
+
+
+def draw_game():
+    for y in range(Y_SIZE * -1, Y_SIZE+1):
+        for x in range(X_SIZE * -1, X_SIZE+1):
+            if position == [x, y]:
+                sys.stdout.write(' x ')
+            else:
+                sys.stdout.write(' - ')
+
+        sys.stdout.write('\n')
+
+
+# Loop while True (which means forever)
+while True:
+    # Print our position after each turn
+    draw_game()
+
+    # Assign action to result of calling input function
+    action = input("What should we do? ").split(' ') # <-- walk left
+                                                     # --> ['walk', 'left']
+    # Conditional check whether input was two words
+    if len(action) != 2:
+        print("Actions must be two words.")
+        continue
+
+    # Deconstruct assignment of 2-length array into two variables
+    verb, noun = action
+
+    # Conditionally check whether value of `verb` is in VERB_LIST
+    if verb not in VERBS:
+        print(f'I don\'t know how to {verb}...')
+        continue
+
+    # Conditionally check whether value of `noun` is in `VERB_LIST`
+    # index of `verb` (which gets directions list)
+    if noun not in VERBS[verb]:
+        print(f'I don\'t how to {verb} {noun}...')
+        continue
+
+    # Get direction function out of direction list and assign to
+    # the walk_fucntion variable
+    walk_function = VERBS[verb][noun]
+
+    # Call the direction function
+    walk_function()
+
+    if not player_is_in_bounds():
+        if is_game_over('Oh no! I fell off the flat Earth!'):
+            break
+
+    if is_winning_position('You found the place to be!'):
+        break
