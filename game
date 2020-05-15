@@ -48,6 +48,7 @@ def move_backward():
 def move_forward():
     position[Y] = position[Y] + 1
 
+TOUCHED_POSITIONS = {}
 
 DIRECTIONS = {
     'forward': move_forward,
@@ -109,15 +110,35 @@ def player_is_in_bounds():
     return position[Y] >= Y_SIZE * -1
 
 
+def times_point_touched(point):
+    x, y = point
+     
+    if x not in TOUCHED_POSITIONS:
+        TOUCHED_POSITIONS[x] = {}
+
+    if y not in TOUCHED_POSITIONS[x]:
+        TOUCHED_POSITIONS[x][y] = 0
+
+    if position == point:
+        TOUCHED_POSITIONS[x][y] += 1
+
+    return TOUCHED_POSITIONS[x][y]
+
+
 def draw_game():
     for y in range(Y_SIZE * -1, Y_SIZE+1):
         for x in range(X_SIZE * -1, X_SIZE+1):
+            previously_touched = times_point_touched([x, y])
+
             if position == [x, y]:
                 sys.stdout.write(' x ')
+            elif previously_touched > 0:
+                sys.stdout.write(f' {previously_touched} ')
             else:
                 sys.stdout.write(' - ')
 
         sys.stdout.write('\n')
+        # /r this is carriage return asshole /n newline or line feed
 
 
 # Loop while True (which means forever)
